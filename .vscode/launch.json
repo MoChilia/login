@@ -1,4 +1,4 @@
-//Launch debug for tests by `jest` with the configuration file `jest.config.js`
+//Launch a debugger for tests by `jest` with the configuration file `jest.config.js`
 {
   "version": "0.2.0",
   "configurations": [
