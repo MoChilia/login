@@ -1,0 +1,14 @@
+name: Debug Azure Login Action
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Debug Azure Login Action
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Use azure/login at debug branch'
+        uses: azure/login@debug
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
