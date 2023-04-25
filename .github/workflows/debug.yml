@@ -1,11 +1,12 @@
-name: Failing Azure Login Action
+name: Debug Azure Login Action
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
   build:
-    name: Testing Azure Login Action
+    name: Debug Azure Login Action
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
