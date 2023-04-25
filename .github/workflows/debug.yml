@@ -15,7 +15,7 @@ jobs:
       - run: |
           pwd
           which az
-          ls -la ~ && ls -la ~/.azure
+          ls -la ~
       
       - name: az version
         uses: azure/cli@v1
@@ -24,7 +24,7 @@ jobs:
           inlineScript: |
              which az
              ls -la ~ && ls -la ~/.azure
-             
+
       - run: |
           pwd
           which az
