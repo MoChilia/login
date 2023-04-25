@@ -11,6 +11,11 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+
+      - run: |
+          pwd
+          which az
+          ls -la ~ && ls -la ~/.azure
       
       - name: az version
         uses: azure/cli@v1
@@ -19,6 +24,11 @@ jobs:
           inlineScript: |
              which az
              ls -la ~ && ls -la ~/.azure
+             
+      - run: |
+          pwd
+          which az
+          ls -la ~ && ls -la ~/.azure
       
       - name: installing node_modules
         run: npm install 
@@ -32,3 +42,8 @@ jobs:
         uses: ./
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - run: |
+          pwd
+          which az
+          ls -la ~ && ls -la ~/.azure
