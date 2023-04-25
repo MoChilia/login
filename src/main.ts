@@ -56,7 +56,7 @@ async function main() {
                 }
             }
         };
-        await executeAzCliCommand("--version", true, execOptions);
+        await executeAzCliCommand("--version", false, execOptions);
         core.debug(`az cli version used:\n${output}`);
 
         let creds = core.getInput('creds', { required: false });
