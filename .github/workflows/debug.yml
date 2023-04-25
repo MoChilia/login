@@ -26,7 +26,7 @@ jobs:
       - name: Build GitHub Action
         run: npm run build
       
-      - run: rm -r ./.azure
+      - run: rm -r ~/.azure
       
       - name: 'debug azure login'
         uses: ./
