@@ -1,0 +1,31 @@
+name: Failing Azure Login Action
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Testing Azure Login Action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      
+      - name: az version
+        uses: azure/cli@v1
+        with:
+          azcliversion: 2.46.0
+          inlineScript: |
+             which az
+             ls -la ~ && ls -la ~/.azure
+      
+      - name: installing node_modules
+        run: npm install 
+
+      - name: Build GitHub Action
+        run: npm run build
+        
+      - name: 'debug azure login'
+        uses: ./
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
