@@ -10,6 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Use azure/login at debug branch'
-        uses: YanaXu/loginFork@test
+        uses: MoChilia/login@debug1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
