@@ -1,6 +1,7 @@
 name: Debug Azure Login Action
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
