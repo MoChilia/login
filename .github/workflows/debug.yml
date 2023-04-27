@@ -1,0 +1,15 @@
+name: Debug Azure Login Action
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Debug Azure Login Action
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Use azure/login at debug branch'
+        uses: MoChilia/login@debug-v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
