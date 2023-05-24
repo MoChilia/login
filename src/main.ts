@@ -127,6 +127,9 @@ async function main() {
             try {
                 //generating ID-token
                 let audience = core.getInput('audience', { required: false });
+                if (!audience) {
+                    audience = "api://AzureADTokenExchange";
+                }
                 federatedToken = await core.getIDToken(audience);
                 if (!!federatedToken) {
                     if (environment != "azurecloud" || "azureusgovernment" || "azurechinacloud")
@@ -136,7 +139,7 @@ async function main() {
                 }
             }
             catch (error) {
-                core.error(`${error.message.split(':')[1]}. Please make sure to give write permissions to id-token in the workflow.`);
+                core.error(`${error.message}. Please make sure to give write permissions to id-token in the workflow.`);
             }
         }
 
