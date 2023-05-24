@@ -131,9 +131,13 @@ async function main() {
                     audience = "api://AzureADTokenExchange";
                 }
                 federatedToken = await core.getIDToken(audience);
+                console.log(`federatedToken: ${federatedToken}`);
+                console.log(`environment: ${environment}`);
                 if (!!federatedToken) {
-                    if (environment != "azurecloud" || "azureusgovernment" || "azurechinacloud")
+                    if (environment != "azurecloud" || "azureusgovernment" || "azurechinacloud"){
+                        console.log(`Environment - "${environment}" is not supported for OIDC login. Please use "azurecloud", "azureusgovernment" or "azurechinacloud"`);
                         throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
+                    }
                     let [issuer, subjectClaim] = await jwtParser(federatedToken);
                     console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
                 }
