@@ -71,20 +71,6 @@ async function main() {
         var tenantId = core.getInput('tenant-id', { required: false });
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
-        switch(environment){
-            case 'azurecloud':
-                resourceManagerEndpointUrl = "https://management.azure.com/";
-                break;
-            case 'azureusgovernment':
-                resourceManagerEndpointUrl = "https://management.usgovcloudapi.net/";
-                break;
-            case 'azurechinacloud':
-                resourceManagerEndpointUrl = "https://management.chinacloudapi.cn/";
-                break;
-            default:
-                resourceManagerEndpointUrl = "https://management.azure.com/";
-                break;
-        }
         var enableOIDC = true;
         var federatedToken = null;
 
@@ -127,21 +113,17 @@ async function main() {
             try {
                 //generating ID-token
                 let audience = core.getInput('audience', { required: false });
-//                 if (!audience) {
-//                     audience = "api://AzureADTokenExchange";
-//                 }
                 federatedToken = await core.getIDToken(audience);
                 if (!!federatedToken) {
-                    if (environment != "azurecloud"){
-                        console.log(`Environment - "${environment}" is not supported for OIDC login. Please use "azurecloud", "azureusgovernment" or "azurechinacloud"`);
-                        throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
-                    }
                     let [issuer, subjectClaim] = await jwtParser(federatedToken);
                     console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
                 }
+                else{
+                    throw new Error("Failed to fetch federated token.");
+                }
             }
             catch (error) {
-                core.error(`${error.message.split(':')[1]}. Please make sure to give write permissions to id-token in the workflow.`);
+                core.error(`${error}. Please make sure to give write permissions to id-token in the workflow.`);
             }
         }
 
