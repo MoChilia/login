@@ -71,6 +71,20 @@ async function main() {
         var tenantId = core.getInput('tenant-id', { required: false });
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
+        switch(environment){
+            case 'azurecloud':
+                resourceManagerEndpointUrl = "https://management.azure.com/";
+                break;
+            case 'azureusgovernment':
+                resourceManagerEndpointUrl = "https://management.usgovcloudapi.net/";
+                break;
+            case 'azurechinacloud':
+                resourceManagerEndpointUrl = "https://management.chinacloudapi.cn/";
+                break;
+            default:
+                resourceManagerEndpointUrl = "https://management.azure.com/";
+                break;
+        }
         var enableOIDC = true;
         var federatedToken = null;
 
@@ -95,7 +109,7 @@ async function main() {
                 throw new Error("Credentials are not passed for Login action.");
             }
         }
-        //generic checks 
+        //generic checks
         //servicePrincipalKey is only required in non-oidc scenario.
         if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
             throw new Error("Not all values are present in the credentials. Ensure clientId, clientSecret and tenantId are supplied.");
@@ -115,7 +129,7 @@ async function main() {
                 let audience = core.getInput('audience', { required: false });
                 federatedToken = await core.getIDToken(audience);
                 if (!!federatedToken) {
-                    if (environment != "azurecloud")
+                    if (environment != "azurecloud" || "azureusgovernment" || "azurechinacloud")
                         throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
                     let [issuer, subjectClaim] = await jwtParser(federatedToken);
                     console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
