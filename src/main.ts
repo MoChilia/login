@@ -110,15 +110,20 @@ async function main() {
         // OIDC specific checks
         if (enableOIDC) {
             console.log('Using OIDC authentication...')
-            //generating ID-token
-            let audience = core.getInput('audience', { required: false });
-            federatedToken = await core.getIDToken(audience);
-            if (!!federatedToken) {
-                let [issuer, subjectClaim] = await jwtParser(federatedToken);
-                console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
+            try {
+                //generating ID-token
+                let audience = core.getInput('audience', { required: false });
+                federatedToken = await core.getIDToken(audience);
+                if (!!federatedToken) {
+                    let [issuer, subjectClaim] = await jwtParser(federatedToken);
+                    console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
+                }
+                else{
+                    throw new Error("Failed to fetch federated token.");
+                }
             }
-            else{
-                throw new Error("Failed to fetch federated token. Please make sure to give write permissions to id-token in the workflow.");
+            catch (error) {
+                core.error(`${error}. Please make sure to give write permissions to id-token in the workflow.`);
             }
         }
 
