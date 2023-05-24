@@ -132,7 +132,7 @@ async function main() {
 //                 }
                 federatedToken = await core.getIDToken(audience);
                 if (!!federatedToken) {
-                    if (environment != "azurecloud" && environment != "azureusgovernment" && environment != "azurechinacloud"){
+                    if (environment != "azurecloud"){
                         console.log(`Environment - "${environment}" is not supported for OIDC login. Please use "azurecloud", "azureusgovernment" or "azurechinacloud"`);
                         throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
                     }
@@ -141,7 +141,7 @@ async function main() {
                 }
             }
             catch (error) {
-                core.error(`${error.message}. Please make sure to give write permissions to id-token in the workflow.`);
+                core.error(`${error.message.split(':')[1]}. Please make sure to give write permissions to id-token in the workflow.`);
             }
         }
 
