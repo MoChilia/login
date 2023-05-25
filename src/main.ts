@@ -65,7 +65,7 @@ async function main() {
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
 
-        //Check for the credentials in individual parameters in the workflow.
+        //Input the credentials in individual parameters in the workflow
         var servicePrincipalId = core.getInput('client-id', { required: false });
         var servicePrincipalKey = null;
         var tenantId = core.getInput('tenant-id', { required: false });
@@ -74,43 +74,24 @@ async function main() {
         var enableOIDC = true;
         var federatedToken = null;
 
-        // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
-        if (servicePrincipalId || tenantId || subscriptionId) {
-
-            //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
-            if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
-                throw new Error("Few credentials are missing. ClientId, tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
-        }
-        else {
-            if (creds) {
-                core.debug('using creds JSON...');
-                enableOIDC = false;
-                servicePrincipalId = secrets.getSecret("$.clientId", true);
-                servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
-                tenantId = secrets.getSecret("$.tenantId", true);
-                subscriptionId = secrets.getSecret("$.subscriptionId", true);
-                resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-            }
-            else {
-                throw new Error("Credentials are not passed for Login action.");
-            }
-        }
-        //generic checks
-        //servicePrincipalKey is only required in non-oidc scenario.
-        if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
-            throw new Error("Not all values are present in the credentials. Ensure clientId, clientSecret and tenantId are supplied.");
-        }
-        if (!subscriptionId && !allowNoSubscriptionsLogin) {
-            throw new Error("Not all values are present in the credentials. Ensure subscriptionId is supplied.");
-        }
-        if (!azureSupportedCloudName.has(environment)) {
-            throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
+        //Use creds as supplementary to individual parameters
+        if (creds) {
+            core.debug('using creds JSON...');
+            servicePrincipalId = servicePrincipalId ? servicePrincipalId : secrets.getSecret("$.clientId", false);
+            servicePrincipalKey = secrets.getSecret("$.clientSecret", false);
+            tenantId = tenantId ? tenantId : secrets.getSecret("$.tenantId", false);
+            subscriptionId = subscriptionId ? subscriptionId : secrets.getSecret("$.subscriptionId", false);
+            resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
         }
 
-        // OIDC specific checks
+        //If clientSecret is passed, use non-OIDC login by default
+        if (servicePrincipalKey) {
+            enableOIDC = false;
+        }
+
+        // Generate ID-token for OIDC
         if (enableOIDC) {
             console.log('Using OIDC authentication...')
-            //generating ID-token
             let audience = core.getInput('audience', { required: false });
             try{
                 federatedToken = await core.getIDToken(audience);
@@ -128,7 +109,13 @@ async function main() {
             }
         }
 
-        // Attempting Az cli login
+        // Check validity of the input environment
+        if (!azureSupportedCloudName.has(environment)) {
+            throw new Error(`Unsupported value for environment is passed.The list of supported values for environment
+            are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’`);
+        }
+
+        // Prepare for Azure Stack
         if (environment == "azurestack") {
             if (!resourceManagerEndpointUrl) {
                 throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
@@ -161,8 +148,73 @@ async function main() {
             console.log(`Done registering cloud: "${environment}"`)
         }
 
+        // Switch to specified cloud
         await executeAzCliCommand(`cloud set -n "${environment}"`, false);
         console.log(`Done setting cloud: "${environment}"`);
+
+        // Attempt az cli login
+        var commonArgs = [""];
+
+        // Check SubscriptionId
+        if(subscriptionId){
+            commonArgs = commonArgs.concat("--subscription", subscriptionId);
+        }
+        else if(allowNoSubscriptionsLogin){
+            commonArgs = commonArgs.concat("--allow-no-subscriptions");
+        }
+
+        // Attempt az cli login using service principal with secret
+        if (servicePrincipalId && tenantId && servicePrincipalKey) {
+            if(!subscriptionId && !allowNoSubscriptionsLogin)
+                throw new Error("SubscriptionId is mandatory if allow-no-subscriptions is not set.");
+            }
+            commonArgs = commonArgs.concat("--service-principal",
+                "-u", servicePrincipalId,
+                "--tenant", tenantId,
+                "-p", servicePrincipalKey
+            );
+            try{
+                console.log(`Attempting az cli login by using service principal with secret...\n
+                            Note: Azure/login action also supports OIDC login mechanism.
+                            If you want to use OIDC login, please do not input ClientSecret.
+                            Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-
+                            credential-to-use-oidc-based-authentication for more details.`);
+                await executeAzCliCommand(`login`, false, loginOptions, commonArgs);
+                if (!allowNoSubscriptionsLogin) {
+                    var args = [
+                        "--subscription",
+                        subscriptionId
+                    ];
+                    await executeAzCliCommand(`account set`, false, loginOptions, args);
+                }
+                isAzCLISuccess = true;
+            }
+            catch (error){
+                core.error(`${error}\n Failed with az cli login by using service principal with secret.`);
+            }
+        }
+
+        // Attempt az cli login using service principal with OIDC
+        if(servicePrincipalId && tenantId && !isAzCLISuccess){
+            console.log('Attempting az cli login by using OIDC authentication...')
+            // Generate ID-token for OIDC
+            let audience = core.getInput('audience', { required: false });
+            try{
+                federatedToken = await core.getIDToken(audience);
+            }
+            catch (error) {
+                core.error(`Please make sure to give write permissions to id-token in the workflow.`);
+                throw error;
+            }
+            if (!!federatedToken) {
+                let [issuer, subjectClaim] = await jwtParser(federatedToken);
+                console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
+            }
+            else{
+                throw new Error("Failed to fetch federated token.");
+            }
+        }
+
 
         // Attempting Az cli login
         var commonArgs = ["--service-principal",
