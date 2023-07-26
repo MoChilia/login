@@ -21,10 +21,10 @@ async function main() {
         await loginConfig.initialize();
         await loginConfig.validate();
 
-        // login to Azure Cli
-        var cliLogin = new AzureCliLogin(loginConfig);
-        await cliLogin.login();
-        isAzCLISuccess = true;
+        // // login to Azure Cli
+        // var cliLogin = new AzureCliLogin(loginConfig);
+        // await cliLogin.login();
+        // isAzCLISuccess = true;
 
         //login to Azure PowerShell
         if (loginConfig.enableAzPSSession) {
