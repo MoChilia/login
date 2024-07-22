@@ -2,6 +2,7 @@ name: Test azure login cleanup off
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   test:
