@@ -13,9 +13,6 @@ jobs:
     steps:
     - name: Checkout tools repo
       uses: actions/checkout@v4
-      with:
-        repository: mochilia/login
-        path: cleanup-0722
    
     - name: Login with individual parameters
       uses: ./
