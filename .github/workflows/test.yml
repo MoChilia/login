@@ -1,0 +1,22 @@
+name: Test azure login cleanup off
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+       AZURE_LOGIN_PRE_CLEANUP_OFF: true
+       AZURE_LOGIN_POST_CLEANUP_OFF: true
+    steps:
+    - name: Checkout tools repo
+      uses: actions/checkout@v4
+      with:
+        repository: mochilia/login
+        path: cleanup-0722
+   
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
