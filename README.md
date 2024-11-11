@@ -1,5 +1,7 @@
 # Azure Login Action
 
+test
+
 - [Azure Login Action](#azure-login-action)
   - [Input Parameters](#input-parameters)
     - [`client-id`](#client-id)
